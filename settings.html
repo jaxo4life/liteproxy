@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>代理设置</title>
+  <style>
+    body { width: 300px; padding: 10px; font-family: Arial, sans-serif; }
+    input, select { margin: 5px 0; width: 100%; padding: 5px; }
+    button { margin: 5px 0; width: 100%; padding: 5px; }
+  </style>
+</head>
+<body>
+  <h3>设置代理</h3>
+  <select id="proxyScheme">
+    <option value="http">HTTP</option>
+    <option value="socks5">SOCKS5</option>
+  </select>
+  <input type="text" id="proxyHost" placeholder="代理服务器地址">
+  <input type="number" id="proxyPort" placeholder="端口">
+  <button id="setProxy">设置代理</button>
+  <button id="clearProxy">清除代理</button>
+  <script src="settings.js"></script>
+</body>
+</html>

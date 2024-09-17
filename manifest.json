@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "简单全局代理",
+  "version": "1.0",
+  "description": "为Chrome设置全局代理",
+  "permissions": [
+    "proxy",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["settings.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
