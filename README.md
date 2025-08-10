@@ -11,7 +11,6 @@
   <a href="#"><img src="https://img.shields.io/badge/China%20Direct%20Rules-Built--in-red.svg" alt="China Direct Rules"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
 </p>
----
 
 ## 🌐 LiteProxy — 简洁高效的 Chrome 代理扩展
 
