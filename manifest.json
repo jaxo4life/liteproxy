@@ -20,7 +20,10 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["settings.html"],
+      "resources": [
+				"settings.html",
+				"bypass.json"
+			],
       "matches": ["<all_urls>"]
     }
   ],

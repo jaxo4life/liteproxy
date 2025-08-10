@@ -5,7 +5,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const bypassList = document.getElementById('bypassList');
   const setProxyBtn = document.getElementById('setProxy');
   const clearProxyBtn = document.getElementById('clearProxy');
+	
+	const presetSelect = document.getElementById('presetSelect');
 
+  // 读取bypass.json，bypass.json需放在扩展根目录
+  fetch(chrome.runtime.getURL('bypass.json'))
+  .then(response => response.json())
+  .then(data => {
+    // 对每个预设规则数组做过滤，剔除无效规则
+    Object.keys(data).forEach(key => {
+      const filteredRules = data[key].filter(rule => isValidBypassRule(rule));
+      data[key] = filteredRules;
+    });
+		
+    window.bypassPresets = data;
+
+    // 填充预设选择框
+    Object.keys(data).forEach(key => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = key;
+      presetSelect.appendChild(option);
+    });
+  })
+  .catch(err => {
+    console.error('读取绕过预设失败:', err);
+  });
+
+  // 选中预设时，自动填充绕过列表
+  presetSelect.addEventListener('change', () => {
+    const selected = presetSelect.value;
+    if (selected && window.bypassPresets && window.bypassPresets[selected]) {
+      bypassList.value = window.bypassPresets[selected].join('\n');
+    } else {
+      bypassList.value = '';
+    }
+  });
+	
   chrome.storage.local.get(['proxyScheme', 'proxyHost', 'proxyPort', 'bypassList'], (result) => {
     proxyScheme.value = result.proxyScheme || 'http';
     proxyHost.value = result.proxyHost || '';
