@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "简单全局代理",
-  "version": "2.0",
+  "version": "2.1.0",
   "description": "为Chrome设置全局代理",
   "permissions": ["proxy", "storage"],
   "action": {
@@ -16,6 +16,11 @@
       "matches": ["<all_urls>"]
     }
   ],
+  "commands": {
+    "toggle-extension": {
+      "description": "切换LiteProxy开关状态"
+    }
+  },
   "icons": {
     "128": "/public/logo.png"
   }

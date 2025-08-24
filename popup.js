@@ -2,6 +2,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const currentProxyDiv = document.getElementById("currentProxy");
   const settingsBtn = document.getElementById("settingsBtn");
 
+  const manifest = chrome.runtime.getManifest();
+  const versionElement = document.querySelector("#version");
+  if (versionElement) {
+    versionElement.textContent = `v${manifest.version}`;
+  }
+
+  const toggleButton = document.getElementById("toggleButton");
+
+  document
+    .getElementById("toggleButton")
+    .addEventListener("click", toggleExtension);
+
   function formatBypassList(bypassList) {
     if (!bypassList) return "";
 
@@ -52,11 +64,33 @@ document.addEventListener("DOMContentLoaded", () => {
               }
             }
           );
+          chrome.action.setBadgeText({
+            text: "",
+          });
+          toggleButton.textContent = "禁用扩展";
+          toggleButton.classList.remove("disabled");          
         } else {
+          chrome.action.setBadgeText({
+            text: "OFF",
+          });
+          chrome.action.setBadgeBackgroundColor({
+            color: "#ef4444",
+          });
+          toggleButton.textContent = "启用扩展";
+          toggleButton.classList.add("disabled");
           currentProxyDiv.innerHTML = "<strong>当前未使用代理</strong>";
         }
       }
     );
+  }
+
+  function toggleExtension() {
+    chrome.storage.local.get(["proxyEnabled"], (items) => {
+      const newState = !items.proxyEnabled;
+      chrome.storage.local.set({ proxyEnabled: newState }, () => {
+        updateCurrentProxyDisplay();
+      });
+    });
   }
 
   updateCurrentProxyDisplay();

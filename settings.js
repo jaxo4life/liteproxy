@@ -126,6 +126,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.close();
               }
             );
+            chrome.action.setBadgeText({
+              text: "",
+            });  
           } else {
             alert("代理设置失败: " + (response?.error || "未知错误"));
           }
@@ -149,6 +152,12 @@ document.addEventListener("DOMContentLoaded", () => {
             "proxyPort",
           ]);
           alert("代理已清除");
+          chrome.action.setBadgeText({
+            text: "OFF",
+          }); 
+          chrome.action.setBadgeBackgroundColor({
+            color: "#ef4444",
+          });
           window.close();
         });
       }

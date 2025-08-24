@@ -5,7 +5,7 @@
 <h1 align="center">LiteProxy</h1>
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version"></a>
+  <a href="#"><img src="https://img.shields.io/badge/version-2.1.0-blue.svg" alt="Version"></a>
   <a href="https://developer.chrome.com/docs/extensions/mv3/intro/"><img src="https://img.shields.io/badge/Manifest-V3-green.svg" alt="Manifest"></a>
   <a href="#"><img src="https://img.shields.io/badge/Proxy-HTTP%20%7C%20SOCKS5-orange.svg" alt="Proxy Support"></a>
   <a href="#"><img src="https://img.shields.io/badge/China%20Direct%20Rules-Built--in-red.svg" alt="China Direct Rules"></a>

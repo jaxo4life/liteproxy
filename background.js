@@ -1,5 +1,34 @@
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({ proxyEnabled: false });
+  chrome.storage.local.get(
+    ["proxyEnabled", "proxyScheme", "proxyHost", "proxyPort", "bypassList"],
+    (result) => {
+      if (result.proxyEnabled) {
+        const bypassArray = result.bypassList
+          ? result.bypassList
+              .split("\n")
+              .map((line) => line.trim())
+              .filter((line) => line.length > 0)
+          : ["localhost"];
+        applyProxySettings(
+          result.proxyScheme,
+          result.proxyHost,
+          result.proxyPort,
+          bypassArray,
+          null
+        );
+        chrome.action.setBadgeText({
+          text: "",
+        });                
+      } else {
+        chrome.action.setBadgeText({
+          text: "OFF",
+        }); 
+        chrome.action.setBadgeBackgroundColor({
+          color: "#ef4444",
+        });
+      }
+    }
+  );
 });
 
 chrome.runtime.onStartup.addListener(() => {
@@ -20,6 +49,16 @@ chrome.runtime.onStartup.addListener(() => {
           bypassArray,
           null
         );
+        chrome.action.setBadgeText({
+          text: "",
+        });                
+      } else {
+        chrome.action.setBadgeText({
+          text: "OFF",
+        });  
+        chrome.action.setBadgeBackgroundColor({
+          color: "#ef4444",
+        });
       }
     }
   );
