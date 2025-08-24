@@ -1,162 +1,54 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <title>代理设置</title>
-  <style>
-    body {
-      background: #f0f2f5;
-      font-family: "Segoe UI", Arial, sans-serif;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 30px 0;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>代理设置</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h3>🌐 设置代理</h3>
+      <select id="proxyScheme">
+        <option value="http">HTTP</option>
+        <option value="socks5">SOCKS5</option>
+      </select>
+      <input type="text" id="proxyHost" placeholder="代理服务器地址" />
+      <input type="number" id="proxyPort" placeholder="端口" />
 
-    .container {
-      width: 420px;
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    }
+      <div class="bypass-section">
+        <h3>⛔ 绕过代理的地址</h3>
+        <label for="presetSelect">绕过预设选择：</label>
+        <select id="presetSelect" style="margin-bottom: 10px">
+          <option value="">-- 请选择预设规则 --</option>
+        </select>
 
-    h3 {
-      margin-bottom: 10px;
-      font-size: 18px;
-      color: #222;
-    }
-
-    select, input, textarea {
-      margin: 6px 0;
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      box-sizing: border-box;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    select:focus, input:focus, textarea:focus {
-      border-color: #4a90e2;
-      box-shadow: 0 0 4px rgba(74,144,226,0.4);
-      outline: none;
-    }
-
-    textarea {
-      height: 100px;
-      resize: vertical;
-    }
-
-    .bypass-section {
-      margin-top: 20px;
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 10px;
-      border: 1px solid #e0e0e0;
-    }
-
-    .help-text {
-      font-size: 12px;
-      color: #666;
-      margin-top: 5px;
-      padding: 6px;
-      background: #f9f9f9;
-      border-left: 3px solid #4a90e2;
-      border-radius: 4px;
-    }
-
-    .help-text ul {
-      margin: 4px 0;
-      padding-left: 18px;
-    }
-
-    .btn-group {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    button {
-      flex: 0 0 auto;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.3s ease, transform 0.1s ease;
-    }
-
-    #setProxy {
-      background: linear-gradient(135deg, #4a90e2, #357ABD);
-    }
-
-    #setProxy:hover {
-      background: linear-gradient(135deg, #5aa3ff, #3c84d8);
-    }
-
-    #clearProxy {
-      background: linear-gradient(135deg, #e94e4e, #d63a3a);
-    }
-
-    #clearProxy:hover {
-      background: linear-gradient(135deg, #ff5e5e, #e14a4a);
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h3>🌐 设置代理</h3>
-    <select id="proxyScheme">
-      <option value="http">HTTP</option>
-      <option value="socks5">SOCKS5</option>
-    </select>
-    <input type="text" id="proxyHost" placeholder="代理服务器地址">
-    <input type="number" id="proxyPort" placeholder="端口">
-    
-    <div class="bypass-section">
-      <h3>⛔ 绕过代理的地址</h3>
-			<label for="presetSelect">绕过预设选择：</label>
-			<select id="presetSelect" style="margin-bottom: 10px;">
-				<option value="">-- 请选择预设规则 --</option>
-			</select>
-			
-      <textarea id="bypassList" placeholder="输入不使用代理的地址，每行一个"></textarea>
-      <div class="help-text">
-        常用示例：
-        <br>localhost
-        <br>127.0.0.1
-        <br>*.local
-        <br>[::1]
-        <br>*.example.com
+        <textarea
+          id="bypassList"
+          placeholder="输入不使用代理的地址，每行一个"
+        ></textarea>
+        <div class="help-text">
+          常用示例：
+          <br />localhost <br />127.0.0.1 <br />*.local <br />[::1]
+          <br />*.example.com
+        </div>
+        <div class="help-text" style="margin-top: 10px">
+          支持的格式：
+          <ul>
+            <li>域名: example.com</li>
+            <li>通配符: *.example.com</li>
+            <li>IP地址: 192.168.1.1</li>
+            <li>IP地址段: 192.168.1.1/24</li>
+            <li>带端口: example.com:8080</li>
+            <li>指定协议: http://example.com</li>
+          </ul>
+        </div>
       </div>
-      <div class="help-text" style="margin-top: 10px;">
-        支持的格式：
-        <ul>
-          <li>域名: example.com</li>
-          <li>通配符: *.example.com</li>
-          <li>IP地址: 192.168.1.1</li>
-          <li>IP地址段: 192.168.1.1/24</li>
-          <li>带端口: example.com:8080</li>
-          <li>指定协议: http://example.com</li>
-        </ul>
+
+      <div class="btn-group">
+        <button id="setProxy">💾 设置</button>
+        <button id="clearProxy">🗑 清除</button>
       </div>
     </div>
-
-    <div class="btn-group">
-      <button id="setProxy">💾 设置</button>
-      <button id="clearProxy">🗑 清除</button>
-    </div>
-  </div>
-  <script src="settings.js"></script>
-</body>
+    <script src="settings.js"></script>
+  </body>
 </html>
