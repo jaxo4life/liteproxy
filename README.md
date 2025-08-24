@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="icons/logo.png" alt="LiteProxy Logo" width="128">
+  <img src="/public/logo.png" alt="LiteProxy Logo" width="128">
 </p>
 
 <h1 align="center">LiteProxy</h1>
@@ -65,11 +65,6 @@ username\:password\@host\:port
 
 ```
 - 建议在需要访问外网时开启代理，不使用时关闭，以减少不必要的流量消耗。
-
----
-
-### 📜 开源协议
-本项目遵循 **MIT License**，欢迎自由使用与修改。  
 
 ---
 
