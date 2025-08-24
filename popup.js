@@ -87,9 +87,32 @@ document.addEventListener("DOMContentLoaded", () => {
   function toggleExtension() {
     chrome.storage.local.get(["proxyEnabled"], (items) => {
       const newState = !items.proxyEnabled;
-      chrome.storage.local.set({ proxyEnabled: newState }, () => {
-        updateCurrentProxyDisplay();
-      });
+
+      if (newState) {
+        // 开启代理 -> 让 background 去设置
+        chrome.storage.local.get(
+          ["proxyScheme", "proxyHost", "proxyPort", "bypassList"],
+          (config) => {
+            chrome.runtime.sendMessage(
+              {
+                action: "setProxy",
+                scheme: config.proxyScheme,
+                host: config.proxyHost,
+                port: config.proxyPort,
+                bypassList: config.bypassList
+                  ? config.bypassList.split("\n").map((x) => x.trim())
+                  : ["localhost"],
+              },
+              () => updateCurrentProxyDisplay()
+            );
+          }
+        );
+      } else {
+        // 关闭代理 -> 调用 background 的 clearProxy
+        chrome.runtime.sendMessage({ action: "clearProxy" }, () => {
+          updateCurrentProxyDisplay();
+        });
+      }
     });
   }
 
