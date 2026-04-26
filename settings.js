@@ -1,108 +1,139 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const proxyScheme = document.getElementById("proxyScheme");
-  const proxyHost = document.getElementById("proxyHost");
-  const proxyPort = document.getElementById("proxyPort");
-  const bypassList = document.getElementById("bypassList");
-  const setProxyBtn = document.getElementById("setProxy");
-  const clearProxyBtn = document.getElementById("clearProxy");
+  const proxyScheme = document.getElementById("proxyScheme")
+  const proxyHost = document.getElementById("proxyHost")
+  const proxyPort = document.getElementById("proxyPort")
+  const bypassList = document.getElementById("bypassList")
+  const setProxyBtn = document.getElementById("setProxy")
+  const clearProxyBtn = document.getElementById("clearProxy")
 
-  const presetSelect = document.getElementById("presetSelect");
+  const presetSelect = document.getElementById("presetSelect")
 
-  // 读取bypass.json，bypass.json需放在扩展根目录
   fetch(chrome.runtime.getURL("bypass.json"))
     .then((response) => response.json())
     .then((data) => {
-      // 对每个预设规则数组做过滤，剔除无效规则
       Object.keys(data).forEach((key) => {
         const filteredRules = data[key].filter((rule) =>
-          isValidBypassRule(rule)
-        );
-        data[key] = filteredRules;
-      });
+          isValidBypassRule(rule),
+        )
+        data[key] = filteredRules
+      })
 
-      window.bypassPresets = data;
+      window.bypassPresets = data
 
-      // 填充预设选择框
       Object.keys(data).forEach((key) => {
-        const option = document.createElement("option");
-        option.value = key;
-        option.textContent = key;
-        presetSelect.appendChild(option);
-      });
+        const option = document.createElement("option")
+        option.value = key
+        option.textContent = key
+        presetSelect.appendChild(option)
+      })
     })
     .catch((err) => {
-      console.error("读取绕过预设失败:", err);
-    });
+      console.error("读取绕过预设失败:", err)
+    })
 
-  // 选中预设时，自动填充绕过列表
   presetSelect.addEventListener("change", () => {
-    const selected = presetSelect.value;
+    const selected = presetSelect.value
     if (selected && window.bypassPresets && window.bypassPresets[selected]) {
-      bypassList.value = window.bypassPresets[selected].join("\n");
+      bypassList.value = window.bypassPresets[selected].join("\n")
     } else {
-      bypassList.value = "";
+      bypassList.value = ""
     }
-  });
+  })
 
   chrome.storage.local.get(
     ["proxyScheme", "proxyHost", "proxyPort", "bypassList"],
     (result) => {
-      proxyScheme.value = result.proxyScheme || "http";
-      proxyHost.value = result.proxyHost || "";
-      proxyPort.value = result.proxyPort || "";
-      bypassList.value = result.bypassList || "localhost";
-    }
-  );
+      proxyScheme.value = result.proxyScheme || "http"
+      proxyHost.value = result.proxyHost || ""
+      proxyPort.value = result.proxyPort || ""
+      bypassList.value = result.bypassList || "<local>"
+    },
+  )
 
+  // 完整覆盖官方文档定义的 bypassList 格式
   function isValidBypassRule(rule) {
-    // 空行
-    if (!rule) return false;
+    if (!rule || !rule.trim()) return false
+    rule = rule.trim()
 
-    // IP地址 (IPv4或IPv6)
-    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
-    const ipv6Regex = /^\[([0-9a-fA-F:]+)\]$/;
+    // <local> 特殊字面量
+    if (rule === "<local>") return true
 
-    // 域名
-    const domainRegex = /^[a-zA-Z0-9]+([\-\.]{1}[a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
+    // CIDR: IP_LITERAL/PREFIX_LENGTH_IN_BITS（IPv4 和 IPv6）
+    const cidrMatch = rule.match(/^(.+)\/(\d+)$/)
+    if (cidrMatch) {
+      const ipPart = cidrMatch[1]
+      const prefix = parseInt(cidrMatch[2], 10)
+      // IPv4 CIDR
+      if (
+        /^(\d{1,3}\.){3}\d{1,3}$/.test(ipPart) &&
+        prefix >= 0 &&
+        prefix <= 32
+      )
+        return true
+      // IPv6 CIDR（方括号或裸格式）
+      if (/^\[?[0-9a-fA-F:]+\]?$/.test(ipPart) && prefix >= 0 && prefix <= 128)
+        return true
+      return false
+    }
 
-    // 带通配符的域名
-    const wildcardDomainRegex =
-      /^\*\.[a-zA-Z0-9]+([\-\.]{1}[a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
+    // 去掉可选的 scheme 前缀
+    let host = rule.replace(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//, "")
 
-    // URL
-    const urlRegex = /^[a-zA-Z]+:\/\/[^\s/$.?#].[^\s]*$/;
+    // 去掉可选的端口（注意 IPv6 方括号）
+    if (host.startsWith("[")) {
+      host = host.replace(/\]:\d+$/, "]")
+    } else {
+      host = host.replace(/:\d+$/, "")
+    }
 
-    return (
-      rule === "localhost" ||
-      ipv4Regex.test(rule) ||
-      ipv6Regex.test(rule) ||
-      domainRegex.test(rule) ||
-      wildcardDomainRegex.test(rule) ||
-      urlRegex.test(rule)
-    );
+    // IPv6 字面量
+    if (/^\[[0-9a-fA-F:]+\]$/.test(host)) return true
+
+    // IPv4 字面量
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(host)) return true
+
+    // 通配符域名：*.example.com 或 *example.com（无点通配）
+    if (/^\*\.?[a-zA-Z0-9]([a-zA-Z0-9.*-]*[a-zA-Z0-9])?$/.test(host))
+      return true
+
+    // 普通域名（允许前导 . 表示 *.）
+    if (/^\.?[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$/.test(host))
+      return true
+
+    return false
+  }
+
+  // Punycode 转换：中文域名 -> ASCII
+  function toPunycode(hostname) {
+    try {
+      return new URL(`http://${hostname}`).hostname
+    } catch {
+      return hostname
+    }
   }
 
   setProxyBtn.addEventListener("click", () => {
-    const scheme = proxyScheme.value;
-    const host = proxyHost.value;
-    const port = proxyPort.value;
+    const scheme = proxyScheme.value
+    const rawHost = proxyHost.value.trim()
+    const port = proxyPort.value.trim()
 
-    // 处理绕过列表
+    // Punycode 转换
+    const host = toPunycode(rawHost)
+
     const bypassRules = bypassList.value
       .split("\n")
       .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+      .filter((line) => line.length > 0)
 
-    // 验证规则
-    const invalidRules = bypassRules.filter((rule) => !isValidBypassRule(rule));
+    const invalidRules = bypassRules.filter((rule) => !isValidBypassRule(rule))
     if (invalidRules.length > 0) {
       alert(
-        `以下规则格式无效：\n${invalidRules.join("\n")}\n\n请检查格式是否正确。`
-      );
-      return;
+        `以下规则格式无效：\n${invalidRules.join("\n")}\n\n请检查格式是否正确。`,
+      )
+      return
     }
 
-    if (host && port) {
+    if (host) {
       chrome.runtime.sendMessage(
         {
           action: "setProxy",
@@ -122,45 +153,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 bypassList: bypassList.value,
               },
               () => {
-                alert("代理设置成功");
-                window.close();
-              }
-            );
-            chrome.action.setBadgeText({
-              text: "",
-            });  
+                alert("代理设置成功")
+                window.close()
+              },
+            )
           } else {
-            alert("代理设置失败: " + (response?.error || "未知错误"));
+            alert("代理设置失败: " + (response?.error || "未知错误"))
           }
-        }
-      );
+        },
+      )
     } else {
-      alert("请输入代理服务器地址和端口");
+      alert("请输入代理服务器地址")
     }
-  });
+  })
 
   clearProxyBtn.addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "clearProxy" }, (response) => {
       if (response.success) {
         chrome.storage.local.set({ proxyEnabled: false }, () => {
-          proxyScheme.value = "http";
-          proxyHost.value = "";
-          proxyPort.value = "";
+          proxyScheme.value = "http"
+          proxyHost.value = ""
+          proxyPort.value = ""
           chrome.storage.local.remove([
             "proxyScheme",
             "proxyHost",
             "proxyPort",
-          ]);
-          alert("代理已清除");
-          chrome.action.setBadgeText({
-            text: "OFF",
-          }); 
-          chrome.action.setBadgeBackgroundColor({
-            color: "#ef4444",
-          });
-          window.close();
-        });
+          ])
+          alert("代理已清除")
+          window.close()
+        })
       }
-    });
-  });
-});
+    })
+  })
+})

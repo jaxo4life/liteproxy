@@ -7,16 +7,19 @@
   </head>
   <body>
     <div class="container">
-      <h3>🌐 设置代理</h3>
+      <h3>设置代理</h3>
       <select id="proxyScheme">
         <option value="http">HTTP</option>
+        <option value="https">HTTPS</option>
+        <option value="socks4">SOCKS4</option>
         <option value="socks5">SOCKS5</option>
+        <option value="quic">QUIC</option>
       </select>
       <input type="text" id="proxyHost" placeholder="代理服务器地址" />
-      <input type="number" id="proxyPort" placeholder="端口" />
+      <input type="number" id="proxyPort" placeholder="端口（留空使用默认端口）" />
 
       <div class="bypass-section">
-        <h3>⛔ 绕过代理的地址</h3>
+        <h3>绕过代理的地址</h3>
         <label for="presetSelect">绕过预设选择：</label>
         <select id="presetSelect" style="margin-bottom: 10px">
           <option value="">-- 请选择预设规则 --</option>
@@ -28,25 +31,27 @@
         ></textarea>
         <div class="help-text">
           常用示例：
-          <br />localhost <br />127.0.0.1 <br />*.local <br />[::1]
+          <br />localhost <br />127.0.0.1 <br />&lt;local&gt; <br />*.local <br />[::1]
           <br />*.example.com
         </div>
         <div class="help-text" style="margin-top: 10px">
           支持的格式：
           <ul>
             <li>域名: example.com</li>
-            <li>通配符: *.example.com</li>
+            <li>通配符: *.example.com, *example.com</li>
             <li>IP地址: 192.168.1.1</li>
-            <li>IP地址段: 192.168.1.1/24</li>
+            <li>IP地址段(CIDR): 192.168.1.1/24</li>
+            <li>IPv6: [::1], [::1]:80</li>
             <li>带端口: example.com:8080</li>
             <li>指定协议: http://example.com</li>
+            <li>简单主机名: &lt;local&gt;</li>
           </ul>
         </div>
       </div>
 
       <div class="btn-group">
-        <button id="setProxy">💾 设置</button>
-        <button id="clearProxy">🗑 清除</button>
+        <button id="setProxy">设置</button>
+        <button id="clearProxy">清除</button>
       </div>
     </div>
     <script src="settings.js"></script>
