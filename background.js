@@ -1,3 +1,5 @@
+// LiteProxy background service worker
+
 // 集中管理 badge 状态
 function updateBadge(enabled) {
   if (enabled) {
@@ -8,21 +10,31 @@ function updateBadge(enabled) {
   }
 }
 
-function applyProxySettings(scheme, host, port, bypassList = ["<local>"], callback) {
-  const processedBypassList = bypassList.map((rule) => {
-    if (rule.includes("/")) {
-      const [ip, mask] = rule.split("/")
-      if (mask && !isNaN(mask) && mask <= 128) return rule
-      return ip
-    }
-    if (rule.startsWith("[") && rule.endsWith("]")) return rule
-    if (rule.startsWith("*.")) return rule
-    return rule
+function notify(title, message) {
+  chrome.notifications.create({
+    type: "basic",
+    iconUrl: "/public/icons/icon128.png",
+    title,
+    message,
   })
+}
 
-  if (!processedBypassList.includes("<local>")) {
-    processedBypassList.push("<local>")
-  }
+// 统一解析绕过列表（兼容数组与换行字符串）
+function parseBypassList(stored) {
+  if (!stored) return ["<local>"]
+  if (Array.isArray(stored)) return stored
+  return stored
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+}
+
+function applyProxySettings(scheme, host, port, bypassList = ["<local>"], callback) {
+  // bypass 规则原样交给 Chrome 权威解析（settings.js 已做格式校验）。
+  // 这里只保证 <local> 存在，不再二次预处理——
+  // 旧版 split("/") 会把 "http://example.com" 错切成 "http:" 导致规则失效。
+  const rules = bypassList.slice()
+  if (!rules.includes("<local>")) rules.push("<local>")
 
   const config = {
     mode: "fixed_servers",
@@ -32,7 +44,7 @@ function applyProxySettings(scheme, host, port, bypassList = ["<local>"], callba
         host: host,
         ...(port ? { port: parseInt(port, 10) } : {}),
       },
-      bypassList: processedBypassList,
+      bypassList: rules,
     },
   }
 
@@ -62,20 +74,39 @@ function initProxyState() {
     ["proxyEnabled", "proxyScheme", "proxyHost", "proxyPort", "bypassList"],
     (result) => {
       if (result.proxyEnabled) {
-        const bypassArray = result.bypassList
-          ? result.bypassList
-              .split("\n")
-              .map((line) => line.trim())
-              .filter((line) => line.length > 0)
-          : ["<local>"]
         applyProxySettings(
           result.proxyScheme,
           result.proxyHost,
           result.proxyPort,
-          bypassArray,
+          parseBypassList(result.bypassList),
         )
       }
       updateBadge(!!result.proxyEnabled)
+    },
+  )
+}
+
+// 快捷键 / 通用开关：无 UI 时通过通知反馈
+function toggleProxy() {
+  chrome.storage.local.get(
+    ["proxyEnabled", "proxyScheme", "proxyHost", "proxyPort", "bypassList"],
+    (result) => {
+      if (result.proxyEnabled) {
+        chrome.proxy.settings.clear({ scope: "regular" }, () => {
+          chrome.storage.local.set({ proxyEnabled: false }, () => {
+            updateBadge(false)
+            notify("LiteProxy", "已禁用代理")
+          })
+        })
+      } else {
+        applyProxySettings(
+          result.proxyScheme,
+          result.proxyHost,
+          result.proxyPort,
+          parseBypassList(result.bypassList),
+        )
+        notify("LiteProxy", "已启用代理")
+      }
     },
   )
 }
@@ -89,8 +120,11 @@ chrome.runtime.onInstalled.addListener(() => {
   initProxyState()
 })
 
-chrome.runtime.onStartup.addListener(() => {
-  initProxyState()
+chrome.runtime.onStartup.addListener(initProxyState)
+
+// 快捷键切换代理。不预设按键，由用户在 chrome://extensions/shortcuts 自定义绑定，避免与系统软件冲突。
+chrome.commands.onCommand.addListener((command) => {
+  if (command === "toggle-extension") toggleProxy()
 })
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -119,79 +153,65 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       })
     })
   } else if (request.action === "checkProxyStatus") {
-    chrome.proxy.settings.get({}, (details) => {
-      sendResponse({ proxyActive: details.value.mode === "fixed_servers" })
+    // 既校验模式，也校验 host 是否为本扩展设置的代理
+    chrome.storage.local.get(["proxyHost"], (stored) => {
+      chrome.proxy.settings.get({}, (details) => {
+        const single = details.value && details.value.rules && details.value.rules.singleProxy
+        const active =
+          details.value.mode === "fixed_servers" &&
+          !!single &&
+          single.host === stored.proxyHost
+        sendResponse({ proxyActive: active })
+      })
     })
   } else if (request.action === "updateBadge") {
     updateBadge(request.enabled)
     sendResponse({ success: true })
+  } else {
+    sendResponse({ success: false, error: "unknown action" })
   }
   return true
 })
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "addToBypass") {
-    // 优先使用 linkUrl（右键链接时），否则使用页面 URL
-    const urlString = info.linkUrl || tab.url
-    const hostname = extractHostname(urlString)
-    if (!hostname) return
+chrome.contextMenus.onClicked.addListener((info) => {
+  if (info.menuItemId !== "addToBypass") return
 
-    chrome.storage.local.get(
-      ["bypassList", "proxyEnabled", "proxyScheme", "proxyHost", "proxyPort"],
-      (result) => {
-        const currentBypassList = result.bypassList || "localhost\n127.0.0.1"
-        const bypassArray = currentBypassList
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0)
+  // page context 提供 pageUrl，link context 提供 linkUrl，均无需 tabs 权限
+  const urlString = info.linkUrl || info.pageUrl
+  const hostname = extractHostname(urlString)
+  if (!hostname) return
 
-        if (
-          bypassArray.includes(hostname) ||
-          bypassArray.includes(`*.${hostname}`)
-        ) {
-          chrome.notifications.create({
-            type: "basic",
-            iconUrl: "/public/logo.png",
-            title: "代理绕过",
-            message: `${hostname} 已在绕过列表中`,
-          })
-          return
+  chrome.storage.local.get(
+    ["bypassList", "proxyEnabled", "proxyScheme", "proxyHost", "proxyPort"],
+    (result) => {
+      const bypassArray = parseBypassList(result.bypassList)
+
+      if (bypassArray.includes(hostname) || bypassArray.includes(`*.${hostname}`)) {
+        notify("代理绕过", `${hostname} 已在绕过列表中`)
+        return
+      }
+
+      bypassArray.push(hostname)
+
+      chrome.storage.local.set({ bypassList: bypassArray.join("\n") }, () => {
+        if (result.proxyEnabled) {
+          applyProxySettings(
+            result.proxyScheme,
+            result.proxyHost,
+            result.proxyPort,
+            bypassArray,
+          )
         }
-
-        bypassArray.push(hostname)
-        const newBypassList = bypassArray.join("\n")
-
-        chrome.storage.local.set({ bypassList: newBypassList }, () => {
-          if (result.proxyEnabled) {
-            applyProxySettings(
-              result.proxyScheme,
-              result.proxyHost,
-              result.proxyPort,
-              bypassArray,
-            )
-          }
-
-          chrome.notifications.create({
-            type: "basic",
-            iconUrl: "/public/logo.png",
-            title: "代理绕过",
-            message: `已将 ${hostname} 加入绕过列表`,
-          })
-        })
-      },
-    )
-  }
+        notify("代理绕过", `已将 ${hostname} 加入绕过列表`)
+      })
+    },
+  )
 })
 
 // 监听代理错误（官方 API）
 chrome.proxy.onProxyError.addListener((details) => {
   console.error("代理错误:", details.error)
   if (details.fatal) {
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "/public/logo.png",
-      title: "代理致命错误",
-      message: details.error || "代理连接已中断",
-    })
+    notify("代理致命错误", details.error || "代理连接已中断")
   }
 })

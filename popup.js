@@ -1,77 +1,94 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const currentProxyDiv = document.getElementById("currentProxy")
+  const toggleBtn = document.getElementById("toggleButton")
   const settingsBtn = document.getElementById("settingsBtn")
+  const versionEl = document.getElementById("version")
+  const statusBar = document.getElementById("statusBar")
+  const stateLine = document.getElementById("stateLine")
+  const stateText = document.getElementById("stateText")
+  const proxyCard = document.getElementById("proxyCard")
 
-  const manifest = chrome.runtime.getManifest()
-  const versionElement = document.querySelector("#version")
-  if (versionElement) {
-    versionElement.textContent = `v${manifest.version}`
+  versionEl.textContent = `v${chrome.runtime.getManifest().version}`
+  toggleBtn.addEventListener("click", toggleExtension)
+  settingsBtn.addEventListener("click", () => chrome.tabs.create({ url: "settings.html" }))
+
+  function renderProxy(info) {
+    proxyCard.replaceChildren()
+    const rows = [
+      ["协议", info.scheme.toUpperCase()],
+      ["地址", info.host],
+      ["端口", info.port || "—"],
+    ]
+    for (const [k, v] of rows) {
+      const row = document.createElement("div")
+      row.className = "proxy-row"
+      const kEl = document.createElement("span")
+      kEl.className = "proxy-k"
+      kEl.textContent = k
+      const vEl = document.createElement("span")
+      vEl.className = "proxy-v"
+      vEl.textContent = v
+      row.append(kEl, vEl)
+      proxyCard.append(row)
+    }
+    if (info.bypass && info.bypass.length) {
+      const b = document.createElement("div")
+      b.className = "proxy-bypass"
+      b.textContent = `绕过 ${info.bypass.length} 条规则`
+      proxyCard.append(b)
+    }
   }
 
-  const toggleButton = document.getElementById("toggleButton")
-
-  document
-    .getElementById("toggleButton")
-    .addEventListener("click", toggleExtension)
-
-  function formatBypassList(bypassList) {
-    if (!bypassList) return ""
-
-    const rules = bypassList
-      .split("\n")
-      .map((rule) => rule.trim())
-      .filter((rule) => rule)
-
-    if (rules.length === 0) return ""
-
-    return (
-      `<br><strong>绕过规则:</strong><br>` +
-      rules
-        .map((rule) => {
-          let icon = "..."
-          if (rule === "<local>") {
-            icon = "[L]"
-          } else if (rule.includes("*")) {
-            icon = "[*]"
-          } else if (rule.match(/^(\d{1,3}\.){3}\d{1,3}/)) {
-            icon = "[#]"
-          } else if (rule.startsWith("[")) {
-            icon = "[v]"
-          }
-          return `${icon} ${rule}`
-        })
-        .join("<br>")
-    )
+  function setOn(info) {
+    statusBar.classList.add("on")
+    stateLine.classList.add("on")
+    stateText.textContent = "已启用 · 代理生效中"
+    toggleBtn.textContent = "禁用代理"
+    toggleBtn.classList.add("on")
+    proxyCard.classList.remove("empty")
+    renderProxy(info)
   }
 
-  function updateCurrentProxyDisplay() {
+  function setWarning() {
+    statusBar.classList.remove("on")
+    stateLine.classList.remove("on")
+    stateText.textContent = "代理设置未生效，请重新设置"
+    toggleBtn.textContent = "禁用代理"
+    toggleBtn.classList.add("on")
+    proxyCard.classList.add("empty")
+    proxyCard.replaceChildren()
+  }
+
+  function setOff() {
+    statusBar.classList.remove("on")
+    stateLine.classList.remove("on")
+    stateText.textContent = "未启用代理"
+    toggleBtn.textContent = "启用代理"
+    toggleBtn.classList.remove("on")
+    proxyCard.classList.add("empty")
+    proxyCard.replaceChildren()
+  }
+
+  function refresh() {
     chrome.storage.local.get(
       ["proxyEnabled", "proxyScheme", "proxyHost", "proxyPort", "bypassList"],
       (result) => {
         if (result.proxyEnabled) {
-          chrome.runtime.sendMessage(
-            { action: "checkProxyStatus" },
-            (response) => {
-              if (response.proxyActive) {
-                currentProxyDiv.innerHTML = `
-                <strong>当前代理:</strong><br>
-                模式: ${result.proxyScheme}<br>
-                地址: ${result.proxyHost}<br>
-                ${result.proxyPort ? "端口: " + result.proxyPort + "<br>" : ""}
-                ${formatBypassList(result.bypassList)}
-              `
-              } else {
-                currentProxyDiv.innerHTML =
-                  '<strong style="color: red;">警告：代理设置未生效，请重新设置</strong>'
-              }
-            },
-          )
-          toggleButton.textContent = "禁用扩展"
-          toggleButton.classList.remove("disabled")
+          chrome.runtime.sendMessage({ action: "checkProxyStatus" }, (response) => {
+            if (response && response.proxyActive) {
+              const bypass = (result.bypassList || "")
+                .split("\n").map((s) => s.trim()).filter(Boolean)
+              setOn({
+                scheme: result.proxyScheme,
+                host: result.proxyHost,
+                port: result.proxyPort,
+                bypass,
+              })
+            } else {
+              setWarning()
+            }
+          })
         } else {
-          toggleButton.textContent = "启用扩展"
-          toggleButton.classList.add("disabled")
-          currentProxyDiv.innerHTML = "<strong>当前未使用代理</strong>"
+          setOff()
         }
       },
     )
@@ -79,9 +96,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function toggleExtension() {
     chrome.storage.local.get(["proxyEnabled"], (items) => {
-      const newState = !items.proxyEnabled
-
-      if (newState) {
+      if (items.proxyEnabled) {
+        chrome.runtime.sendMessage({ action: "clearProxy" }, refresh)
+      } else {
         chrome.storage.local.get(
           ["proxyScheme", "proxyHost", "proxyPort", "bypassList"],
           (config) => {
@@ -92,24 +109,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 host: config.proxyHost,
                 port: config.proxyPort,
                 bypassList: config.bypassList
-                  ? config.bypassList.split("\n").map((x) => x.trim())
+                  ? config.bypassList.split("\n").map((x) => x.trim()).filter(Boolean)
                   : ["<local>"],
               },
-              () => updateCurrentProxyDisplay(),
+              refresh,
             )
           },
         )
-      } else {
-        chrome.runtime.sendMessage({ action: "clearProxy" }, () => {
-          updateCurrentProxyDisplay()
-        })
       }
     })
   }
 
-  updateCurrentProxyDisplay()
-
-  settingsBtn.addEventListener("click", () => {
-    chrome.tabs.create({ url: "settings.html" })
-  })
+  refresh()
 })

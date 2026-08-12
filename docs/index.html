@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiteProxy · 为 Chrome 而生的全局代理</title>
+    <meta name="description" content="基于 Manifest V3 的 Chrome 全局代理扩展。轻量、克制、小而美。" />
+    <style>
+      :root {
+        --bg: #fbfbfd;
+        --surface: #ffffff;
+        --text: #18181b;
+        --text-dim: #71717a;
+        --text-mute: #a1a1aa;
+        --border: #e4e4e7;
+        --accent: #4f46e5;
+        --accent-hover: #4338ca;
+        --accent-soft: rgba(79, 70, 229, 0.08);
+        --success: #10b981;
+        --radius: 16px;
+        --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: var(--font);
+        color: var(--text);
+        background: var(--bg);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: inherit; text-decoration: none; }
+      .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+      nav { display: flex; align-items: center; justify-content: space-between; padding: 22px 0; }
+      .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; letter-spacing: -0.2px; }
+      .nav-brand img { width: 30px; height: 30px; }
+      .nav-links { display: flex; align-items: center; gap: 24px; font-size: 14px; color: var(--text-dim); }
+      .nav-links a:hover { color: var(--text); }
+      .nav-cta { background: var(--text); color: #fff !important; padding: 8px 16px; border-radius: 8px; font-weight: 600; }
+      .nav-cta:hover { background: #000; color: #fff !important; }
+
+      .hero { text-align: center; padding: 84px 0 64px; position: relative; overflow: hidden; }
+      .hero::before {
+        content: ""; position: absolute; inset: 0;
+        background: radial-gradient(58% 58% at 50% 0%, var(--accent-soft), transparent 70%);
+        pointer-events: none;
+      }
+      .hero-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--surface); border: 1px solid var(--border);
+        padding: 6px 14px; border-radius: 999px; font-size: 13px; color: var(--text-dim);
+        margin-bottom: 28px; position: relative;
+      }
+      .hero-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+      .hero h1 { font-size: clamp(38px, 6vw, 60px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.05; position: relative; }
+      .hero h1 .accent { color: var(--accent); }
+      .hero p.lead { font-size: 19px; color: var(--text-dim); margin: 22px auto 0; max-width: 580px; position: relative; }
+      .hero-cta { display: flex; gap: 12px; justify-content: center; margin-top: 36px; position: relative; flex-wrap: wrap; }
+      .btn { padding: 13px 26px; border-radius: 10px; font-size: 15px; font-weight: 600; transition: all 0.15s ease; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; }
+      .btn-primary { background: var(--accent); color: #fff; }
+      .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+      .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+      .btn-ghost:hover { border-color: var(--text-mute); transform: translateY(-1px); }
+
+      section { padding: 56px 0; }
+      .section-title { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; text-align: center; }
+      .section-sub { text-align: center; color: var(--text-dim); margin-top: 10px; margin-bottom: 44px; font-size: 16px; }
+
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+      .feature {
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 26px; transition: all 0.2s ease;
+      }
+      .feature:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(24, 24, 27, 0.07); border-color: transparent; }
+      .feature .ic {
+        width: 42px; height: 42px; border-radius: 11px; background: var(--accent-soft); color: var(--accent);
+        display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+      }
+      .feature h3 { font-size: 16px; font-weight: 600; margin-bottom: 7px; }
+      .feature p { font-size: 14px; color: var(--text-dim); }
+
+      .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+      .chip { padding: 9px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 14px; font-weight: 500; }
+
+      .steps { counter-reset: step; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; position: relative; }
+      .step::before {
+        counter-increment: step; content: counter(step);
+        position: absolute; top: 22px; right: 22px; width: 28px; height: 28px;
+        background: var(--accent-soft); color: var(--accent); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+      }
+      .step h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; padding-right: 36px; }
+      .step p { font-size: 13.5px; color: var(--text-dim); }
+      .step code { background: var(--bg); padding: 2px 7px; border-radius: 5px; font-size: 12.5px; border: 1px solid var(--border); }
+
+      .kbd { display: inline-block; background: var(--surface); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px; font-size: 13px; font-family: ui-monospace, monospace; color: var(--text); }
+
+      footer { border-top: 1px solid var(--border); padding: 36px 0; margin-top: 40px; text-align: center; color: var(--text-mute); font-size: 14px; }
+      footer a { color: var(--text-dim); }
+      footer a:hover { color: var(--accent); }
+
+      @media (max-width: 720px) {
+        .grid { grid-template-columns: 1fr; }
+        .steps { grid-template-columns: 1fr; }
+        .hero { padding: 56px 0 40px; }
+        .nav-link-hide { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav>
+        <a class="nav-brand" href="#">
+          <img src="./logo.png" alt="LiteProxy" />
+          <span>LiteProxy</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features" class="nav-link-hide">功能</a>
+          <a href="#install" class="nav-link-hide">安装</a>
+          <a href="https://github.com/jaxo4life/liteproxy" class="nav-cta">GitHub</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <span class="hero-badge"><span class="dot"></span> Manifest V3 · 零依赖</span>
+        <h1>为 Chrome 而生的<br /><span class="accent">全局代理</span></h1>
+        <p class="lead">轻量、克制、小而美。没有账号、没有后端、没有追踪——所有配置只存在你本地的浏览器里。</p>
+        <div class="hero-cta">
+          <a href="#install" class="btn btn-primary">快速开始</a>
+          <a href="https://github.com/jaxo4life/liteproxy" class="btn btn-ghost">查看源码</a>
+        </div>
+      </header>
+
+      <section id="features" style="padding-top: 0;">
+        <h2 class="section-title">一切恰到好处</h2>
+        <p class="section-sub">只做"全局代理"这一件事，并把它做到精致</p>
+        <div class="grid">
+          <div class="feature">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
+            <h3>轻量无依赖</h3>
+            <p>原生 JS，无构建步骤，全项目不到 600 行，易审计、可自托管。</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg></div>
+            <h3>全协议支持</h3>
+            <p>HTTP、HTTPS、SOCKS4、SOCKS5、QUIC 五种代理协议开箱即用。</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="22" height="14" rx="7"></rect><circle cx="8" cy="12" r="3"></circle></svg></div>
+            <h3>即时切换 · 快捷键</h3>
+            <p>一键启用 / 禁用立即生效，快捷键可在 chrome://extensions/shortcuts 自定义。</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"></rect><line x1="12" y1="7" x2="12" y2="11"></line></svg></div>
+            <h3>右键快速绕过</h3>
+            <p>任意网页或链接上右键，一键加入绕过列表，无需打开设置页。</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
+            <h3>内置中国直连</h3>
+            <p>常见国内域名与 IP 段自动直连，海外流量走代理，省心省流。</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></div>
+            <h3>智能细节</h3>
+            <p>中文域名自动转 Punycode，错误自动提醒，最小权限、不追踪。</p>
+          </div>
+        </div>
+      </section>
+
+      <section style="padding-top: 0;">
+        <h2 class="section-title">支持的协议</h2>
+        <p class="section-sub">覆盖主流代理协议，适配绝大多数服务端</p>
+        <div class="chips">
+          <span class="chip">HTTP</span>
+          <span class="chip">HTTPS</span>
+          <span class="chip">SOCKS4</span>
+          <span class="chip">SOCKS5</span>
+          <span class="chip">QUIC</span>
+        </div>
+      </section>
+
+      <section id="install" style="padding-top: 0;">
+        <h2 class="section-title">四步上手</h2>
+        <p class="section-sub">无需打包，加载即用</p>
+        <div class="steps">
+          <div class="step">
+            <h4>克隆仓库</h4>
+            <p>下载或 <code>git clone</code> 本项目到本地任意目录。</p>
+          </div>
+          <div class="step">
+            <h4>打开扩展管理</h4>
+            <p>地址栏访问 <code>chrome://extensions/</code>。</p>
+          </div>
+          <div class="step">
+            <h4>开启开发者模式</h4>
+            <p>右上角切换"开发者模式"开关。</p>
+          </div>
+          <div class="step">
+            <h4>加载扩展</h4>
+            <p>点击"加载已解压的扩展程序"，选择项目根目录即可。</p>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p>MIT License · <a href="https://github.com/jaxo4life/liteproxy">GitHub</a> · 用克制打造</p>
+      </footer>
+    </div>
+  </body>
+</html>

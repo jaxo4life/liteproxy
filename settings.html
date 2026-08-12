@@ -2,58 +2,72 @@
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <title>代理设置</title>
+    <title>LiteProxy · 代理设置</title>
     <link rel="stylesheet" href="settings.css" />
   </head>
   <body>
-    <div class="container">
-      <h3>设置代理</h3>
-      <select id="proxyScheme">
-        <option value="http">HTTP</option>
-        <option value="https">HTTPS</option>
-        <option value="socks4">SOCKS4</option>
-        <option value="socks5">SOCKS5</option>
-        <option value="quic">QUIC</option>
-      </select>
-      <input type="text" id="proxyHost" placeholder="代理服务器地址" />
-      <input type="number" id="proxyPort" placeholder="端口（留空使用默认端口）" />
-
-      <div class="bypass-section">
-        <h3>绕过代理的地址</h3>
-        <label for="presetSelect">绕过预设选择：</label>
-        <select id="presetSelect" style="margin-bottom: 10px">
-          <option value="">-- 请选择预设规则 --</option>
-        </select>
-
-        <textarea
-          id="bypassList"
-          placeholder="输入不使用代理的地址，每行一个"
-        ></textarea>
-        <div class="help-text">
-          常用示例：
-          <br />localhost <br />127.0.0.1 <br />&lt;local&gt; <br />*.local <br />[::1]
-          <br />*.example.com
+    <main class="container">
+      <header class="head">
+        <div class="brand">
+          <img src="/public/icons/icon48.png" alt="LiteProxy" class="logo" />
+          <div>
+            <h1>LiteProxy</h1>
+            <p class="sub">代理设置</p>
+          </div>
         </div>
-        <div class="help-text" style="margin-top: 10px">
-          支持的格式：
+      </header>
+
+      <section class="card">
+        <div class="fields">
+          <div class="field">
+            <label for="proxyScheme">协议</label>
+            <select id="proxyScheme">
+              <option value="http">HTTP</option>
+              <option value="https">HTTPS</option>
+              <option value="socks4">SOCKS4</option>
+              <option value="socks5">SOCKS5</option>
+              <option value="quic">QUIC</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="proxyHost">代理服务器地址</label>
+            <input id="proxyHost" type="text" placeholder="127.0.0.1 或 ss.example.com" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="proxyPort">端口 <span class="hint">必填</span></label>
+            <input id="proxyPort" type="number" placeholder="如 7890" autocomplete="off" required />
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="bypass-head">
+          <h2>绕过列表</h2>
+          <select id="presetSelect" class="preset">
+            <option value="">预设规则…</option>
+          </select>
+        </div>
+        <textarea id="bypassList" placeholder="每行一条：example.com、*.local、192.168.0.0/16、[::1]、&lt;local&gt;"></textarea>
+        <details class="help">
+          <summary>支持的格式</summary>
           <ul>
-            <li>域名: example.com</li>
-            <li>通配符: *.example.com, *example.com</li>
-            <li>IP地址: 192.168.1.1</li>
-            <li>IP地址段(CIDR): 192.168.1.1/24</li>
-            <li>IPv6: [::1], [::1]:80</li>
-            <li>带端口: example.com:8080</li>
-            <li>指定协议: http://example.com</li>
-            <li>简单主机名: &lt;local&gt;</li>
+            <li><code>example.com</code> · 域名</li>
+            <li><code>*.example.com</code> · 通配符</li>
+            <li><code>192.168.1.1</code> · IPv4</li>
+            <li><code>192.168.0.0/16</code> · CIDR 网段</li>
+            <li><code>[::1]</code> · IPv6</li>
+            <li><code>http://example.com</code> · 指定协议</li>
+            <li><code>&lt;local&gt;</code> · 本地地址</li>
+            <li>支持中文域名（自动转 Punycode）</li>
           </ul>
-        </div>
-      </div>
+        </details>
+      </section>
 
-      <div class="btn-group">
-        <button id="setProxy">设置</button>
-        <button id="clearProxy">清除</button>
+      <div class="actions">
+        <button id="setProxy" class="primary">保存并启用</button>
+        <button id="clearProxy" class="ghost">清除</button>
       </div>
-    </div>
+    </main>
     <script src="settings.js"></script>
   </body>
 </html>

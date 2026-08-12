@@ -1,64 +1,96 @@
 <p align="center">
-  <img src="/public/logo.png" alt="LiteProxy Logo" width="128">
+  <img src="public/logo.png" alt="LiteProxy" width="120">
 </p>
 
 <h1 align="center">LiteProxy</h1>
 
 <p align="center">
-  <a href="https://developer.chrome.com/docs/extensions/mv3/intro/"><img src="https://img.shields.io/badge/Manifest-V3-green.svg" alt="Manifest"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Proxy-HTTP%20%7C%20HTTPS%20%7C%20SOCKS4%20%7C%20SOCKS5%20%7C%20QUIC-orange.svg" alt="Proxy Support"></a>
-  <a href="#"><img src="https://img.shields.io/badge/China%20Direct%20Rules-Built--in-red.svg" alt="China Direct Rules"></a>
+  为 Chrome 而生的全局代理<br>轻量 · 克制 · 小而美
 </p>
 
-## LiteProxy — 简洁高效的 Chrome 代理扩展
-
-**LiteProxy** 是一款轻量、易用的 Chrome 浏览器代理扩展，基于 **Manifest V3** 规范开发。
-无需复杂设置，几步即可完成代理切换，让你的浏览体验更加自由顺畅。
-
----
-
-### 功能特点
-
-- **轻量无依赖** — 仅需加载扩展，无需安装额外软件
-- **全协议支持** — 兼容 HTTP、HTTPS、SOCKS4、SOCKS5、QUIC 五种代理协议
-- **即时切换** — 一键启用/禁用代理，立即生效
-- **右键快速绕过** — 在任意网页上右键即可将当前网站加入代理绕过列表
-- **内置中国大陆直连规则** — 常见国内网站和 IP 段自动直连，海外流量走代理
-- **代理错误提醒** — 代理连接异常时自动弹出通知
-- **端口自动推断** — 未指定端口时自动使用协议默认端口（HTTP=80, HTTPS=443, SOCKS=1080）
-- **中文域名支持** — 自动将中文域名转换为 Punycode 格式
+<p align="center">
+  <a href="https://developer.chrome.com/docs/extensions/mv3/intro/"><img src="https://img.shields.io/badge/Manifest-V3-4f46e5.svg" alt="Manifest"></a>
+  <a href="#"><img src="https://img.shields.io/badge/协议-HTTP%20%7C%20HTTPS%20%7C%20SOCKS4%2F5%20%7C%20QUIC-10b981.svg" alt="Protocols"></a>
+  <a href="https://jaxo4life.github.io/liteproxy/"><img src="https://img.shields.io/badge/主页-Landing-18181b.svg" alt="Landing"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-71717a.svg" alt="License"></a>
+</p>
 
 ---
 
-### 安装方法
+> 基于 Manifest V3 的 Chrome 全局代理扩展。没有账号、没有后端、没有追踪——装上即用，所有配置只存在你本地的浏览器里。它只做一件事：**把 Chrome 的流量导向你指定的代理服务器，并做到足够精致**。
 
-1. **下载项目文件**
-   将本仓库代码下载并解压至本地
+## ✨ 功能
 
-2. **打开 Chrome 扩展管理**
-   地址栏输入 `chrome://extensions/`
+**核心**
 
-3. **启用开发者模式**
-   右上角开启 **开发者模式**
+- **即时切换** — 一键启用 / 禁用，立即生效
+- **快捷键** — 在 `chrome://extensions/shortcuts` 自行绑定组合键切换
+- **全协议** — HTTP / HTTPS / SOCKS4 / SOCKS5 / QUIC
 
-4. **加载扩展**
-   点击 **"加载已解压的扩展程序"**，选择解压后的文件夹
+**绕过规则**
 
-5. **开始使用**
-   点击扩展图标，配置代理地址和端口，选择协议，即可启用代理
+- **右键绕过** — 任意网页 / 链接上右键，一键加入绕过列表
+- **内置中国直连** — 常见国内域名与 IP 段自动直连，海外流量走代理
+- **精确格式校验** — 域名、通配符、CIDR、IPv6、Punycode 全支持
 
----
+**体验**
 
-### 使用说明
+- **轻量无依赖** — 原生 JS，无构建步骤，全项目不到 600 行
+- **错误提醒** — 代理连接异常时弹通知
+- **最小权限** — 无任何网络请求权限，不收集任何数据
 
-- **设置代理**：点击扩展图标进入设置页，填写代理服务器地址、端口、选择协议
-- **绕过列表**：支持域名、通配符（`*.example.com`）、IP 地址、CIDR 网段（`192.168.0.0/16`）、`<local>` 等格式
-- **预设规则**：内置"中国大陆直连"预设，一键加载常见国内网站和 IP 段的绕过规则
-- **右键添加**：在网页或链接上右键选择"将此网站加入代理绕过列表"，快速绕过指定域名
-- **快捷键**：支持通过 Chrome 快捷键设置切换代理开关
+## 📦 安装
 
----
+1. 下载或克隆本仓库
+2. 地址栏打开 `chrome://extensions/`
+3. 右上角开启 **开发者模式**
+4. 点击 **「加载已解压的扩展程序」**，选择仓库根目录
+5. 工具栏点 LiteProxy 图标 → 填写代理 → 保存
 
-### 界面预览
+## 📖 使用
 
-![界面预览](screenshot.png)
+| 操作 | 方式 |
+| :--- | :--- |
+| 设置代理 | 扩展菜单 → 代理设置 |
+| 开关切换 | 弹窗主按钮，或自行绑定的快捷键 |
+| 加入绕过 | 网页 / 链接上右键 →「将此网站加入代理绕过列表」 |
+| 加载预设 | 代理设置 → 预设规则 →「中国大陆直连」 |
+
+### 绕过列表格式
+
+每行一条：
+
+| 格式 | 示例 | 说明 |
+| :--- | :--- | :--- |
+| 域名 | `example.com` | 仅精确匹配自身 |
+| 通配符 | `*.example.com` | 匹配自身及所有子域 |
+| IPv4 | `192.168.1.1` | — |
+| CIDR 网段 | `192.168.0.0/16` | — |
+| IPv6 | `[::1]` | 需方括号 |
+| 指定协议 | `http://example.com` | — |
+| 本地地址 | `<local>` | 内网 / 回环 |
+
+> ⚠️ `example.com` **不会**自动匹配 `www.example.com`，要含子域请用 `*.example.com`。绕过列表中的地址走**直连**，既不走本扩展代理，也不走系统代理。
+
+## 🔐 权限
+
+LiteProxy 遵循最小权限原则：
+
+| 权限 | 用途 |
+| :--- | :--- |
+| `proxy` | 设置 Chrome 代理 |
+| `storage` | 保存配置（仅本地） |
+| `contextMenus` | 右键菜单 |
+| `notifications` | 状态通知 |
+
+无任何 host / 网络权限，不上传任何数据。
+
+## 🖼️ 界面预览
+
+<p align="center">
+  <img src="screenshot.png" alt="LiteProxy 界面" width="420">
+</p>
+
+## 📄 许可
+
+[MIT](LICENSE) · 用克制打造

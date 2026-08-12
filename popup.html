@@ -2,16 +2,30 @@
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <title>简单全局代理</title>
+    <title>LiteProxy</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <span id="version" class="ver"></span>
-    <img src="/public/logo.png" style="width: 50px" />
-    <h3>简单全局代理</h3>
-    <button class="toggle-button" id="toggleButton">禁用扩展</button>
-    <button id="settingsBtn">⚙️ 代理设置</button>
-    <div id="currentProxy" class="no-proxy">当前未设置代理</div>
+    <div class="status-bar" id="statusBar"></div>
+    <div class="popup">
+      <header class="top">
+        <div class="brand">
+          <img src="/public/icons/icon48.png" alt="LiteProxy" class="logo" />
+          <span class="name">LiteProxy</span>
+        </div>
+        <span id="version" class="ver"></span>
+      </header>
+
+      <div class="state" id="stateLine">
+        <span class="dot" id="stateDot"></span>
+        <span id="stateText">未启用</span>
+      </div>
+
+      <div id="proxyCard" class="proxy-card empty"></div>
+
+      <button id="toggleButton" class="toggle">启用代理</button>
+      <button id="settingsBtn" class="link">代理设置 →</button>
+    </div>
 
     <script src="popup.js"></script>
   </body>
